@@ -9,6 +9,7 @@ data class User(
     val name:String,
     val email:String,
     val authCode:String,
-    val createdAt:String,
+    var createdAt:String?,
+    var isConfirmed:Boolean = false,
     val role: Role
 )

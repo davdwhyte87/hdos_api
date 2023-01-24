@@ -7,6 +7,7 @@ Features:
 
 Nurses can: 
 - accept invitations and signup 
+- login
 - add patient to the platform 
 - add new diagnosis to for patient 
 - add new test record

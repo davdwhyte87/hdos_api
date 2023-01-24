@@ -4,6 +4,9 @@ target
 *.iws
 .idea
 .mvn
+.gradle
+gradle
+build
 .DS_Store
 .classpath
 .ekstazi
