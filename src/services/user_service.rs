@@ -26,4 +26,6 @@ impl UserService{
         let res_user =collection.insert_one(user, None).await.ok().expect("Error creating user");
         Ok(res_user)
     }
+
+
 }
