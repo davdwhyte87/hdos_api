@@ -4,13 +4,13 @@ use actix_web::web::Data;
 
 
 mod controllers;
-use controllers::user_controller::{create_user, say_hello};
+use controllers::{user_controller, diagnosis_controller};
 mod models;
 use models::{response};
 mod database;
 use database::db::db;
 mod services;
-use services::{user_service, pet_service};
+use services::{user_service, pet_service, diagnosis_service};
 use crate::services::mongo_service::MongoService;
 mod utils;
 
@@ -35,11 +35,12 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move|| {
         App::new()
             .app_data(db_data.clone())
-            .service(say_hello)
-            .service(create_user)
+            .service(user_controller::say_hello)
+            .service(user_controller::create_user)
+            .service(diagnosis_controller::add_dignosis)
     
     })
-        .bind(("127.0.0.1", 8080))?
+        .bind(("127.0.0.1", 80))?
         .run()
         .await
 }

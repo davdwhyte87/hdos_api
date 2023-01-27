@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 actix-rt = "2.8.0"
 actix-web = "4.3.0"
+chrono = "0.4.23"
 dotenv = "0.15.0"
 handlebars = "4.3.6"
 lettre = "0.10.1"

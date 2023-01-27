@@ -21,11 +21,11 @@ pub struct DiagnosisService{
 }
 
 impl DiagnosisService {
-    pub async fn create_user(db: &Database, diagnosis: Diagnosis) -> Result<InsertOneResult, Error> {
+    pub async fn create(db: &Database, diagnosis: Diagnosis) -> Result<InsertOneResult, Error> {
         // Get a handle to a collection in the database.
         let collection = db.collection::<Diagnosis>(COLLECTION_NAME);
-        let res_user =collection.insert_one(diagnosis, None).await.ok().expect("Error creating diagnosis");
-        Ok(res_user)
+        let res_diag =collection.insert_one(diagnosis, None).await.ok().expect("Error creating diagnosis");
+        Ok(res_diag)
     }
     
     
