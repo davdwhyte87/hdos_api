@@ -1,4 +1,4 @@
-use std::borrow::Borrow;
+use std::borrow::{Borrow, BorrowMut};
 use actix_web::{Responder, get, HttpResponse, web::Json, post};
 use actix_web::web::Data;
 use crate::database::db::db::DB;
@@ -24,9 +24,13 @@ pub async fn say_hello()-> HttpResponse{
 pub async fn create_user(database:Data<MongoService>, new_user:Json<User>)->HttpResponse{
     let user = User{
         name:new_user.name.to_owned(),
+        created_at:new_user.created_at.to_owned(),
+        email:new_user.email.to_owned(),
+        password: new_user.password.to_owned(),
+        user_type: new_user.into_inner().user_type,
         id:None
     };
-    let user_res = UserService::create_user(database.db.borrow(),user).await;
+    let user_res = UserService::create_user(database.db.borrow(),&user).await;
     match user_res {
         Ok(user)=>HttpResponse::Ok().json(user),
         Err(err)=>HttpResponse::InternalServerError().body(err.to_string())
