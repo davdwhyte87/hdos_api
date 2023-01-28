@@ -4,10 +4,12 @@ use std::io::Read;
 use std::string::ToString;
 use handlebars::Handlebars;
 use mongodb::{Client, Database, options::ClientOptions};
+use mongodb::bson::doc;
 use mongodb::bson::extjson::de::Error;
+use mongodb::bson::oid::ObjectId;
 use mongodb::results::InsertOneResult;
 use serde_json::{json, Value};
-use serde_json::Value::String;
+
 
 use crate::database::db::db::DB;
 use crate::models::helper::EmailData;
@@ -55,6 +57,12 @@ impl UserService{
         let res_user =collection.insert_one(user, None).await.ok().expect("Error creating user");
         Ok(res_user)
     }
-
-
+    pub async fn get_by_id(db:&Database, id:String)->Result<User, Error>{
+        let object_id = ObjectId::parse_str(id).unwrap();
+        let filter = doc! {"_id":object_id};
+        let collection = db.collection::<User>(COLLECTION_NAME);
+        let user_detail = collection.find_one(filter, None).await.ok().expect("Error getting diagnosis");
+        Ok(user_detail.unwrap())
+    }
 }
+

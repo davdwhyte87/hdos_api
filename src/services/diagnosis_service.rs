@@ -3,6 +3,8 @@ use std::fs::File;
 use std::io::Read;
 use std::string::ToString;
 use mongodb::{Client, Database, options::ClientOptions};
+use mongodb::bson::doc;
+use mongodb::bson::oid::ObjectId;
 use mongodb::bson::extjson::de::Error;
 use mongodb::results::InsertOneResult;
 
@@ -27,7 +29,12 @@ impl DiagnosisService {
         let res_diag =collection.insert_one(diagnosis, None).await.ok().expect("Error creating diagnosis");
         Ok(res_diag)
     }
-    
-    
-    
+
+    pub async fn get_by_id(db:&Database, id:String)->Result<Diagnosis, Error>{
+        let object_id = ObjectId::parse_str(id).unwrap();
+        let filter = doc! {"_id":object_id};
+        let collection = db.collection::<Diagnosis>(COLLECTION_NAME);
+        let user_detail = collection.find_one(filter, None).await.ok().expect("Error getting diagnosis");
+        Ok(user_detail.unwrap())
+    }
 }
