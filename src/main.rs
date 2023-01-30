@@ -38,6 +38,8 @@ async fn main() -> std::io::Result<()> {
             .service(user_controller::say_hello)
             .service(user_controller::create_user)
             .service(diagnosis_controller::add_dignosis)
+            .service(diagnosis_controller::update_diagnosis)
+            .service(diagnosis_controller::get_user_diagnosis)
     
     })
         .bind(("127.0.0.1", 80))?
