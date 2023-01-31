@@ -7,9 +7,10 @@ use serde_derive::{Deserialize, Serialize};
 pub struct TestRecord {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     pub id: Option<ObjectId>,
-    pub nurse_id:String,
+    pub nurse_email:String,
     pub created_at: String,
     pub diagnosis_id: Option<String>,
     pub note: String,
+    pub patient_email:String,
     pub test_datas: Vec<String>
 }

@@ -3,13 +3,15 @@ use actix_web::{get, HttpResponse, post, put};
 use actix_web::web::{Data, Json, Path};
 use mongodb::Database;
 use crate::models::diagnosis::Diagnosis;
+use crate::models::request_models::{CreateDiagnosisReq, UpdateDiagnosisReq};
+use crate::req_models::create_user_req::CreateUserReq;
 use crate::services::diagnosis_service::DiagnosisService;
 use crate::services::mongo_service::MongoService;
 
 
 // a nurse should be abel to add a new diagnosis to a patient
-#[post("/diagnosis/add")]
-pub async fn add_dignosis(database:Data<MongoService>, new_diag:Json<Diagnosis>) ->HttpResponse{
+#[post("/diagnosis/create")]
+pub async fn add_dignosis(database:Data<MongoService>, new_diag:Json<CreateDiagnosisReq>) ->HttpResponse{
     let diagnosis = Diagnosis{
         id: None,
         note: new_diag.note.to_owned(),
@@ -17,8 +19,8 @@ pub async fn add_dignosis(database:Data<MongoService>, new_diag:Json<Diagnosis>)
         created_at:  chrono::offset::Utc::now().to_string(),
         prescription: new_diag.prescription.to_owned(),
         updated_at:None,
-        patient_id:"heaven".to_string(),
-        nurse_id: new_diag.nurse_id.to_owned()
+        patient_email:new_diag.patient_email.to_owned(),
+        nurse_email: new_diag.nurse_email.to_owned()
     };
     let res_dig = DiagnosisService::create(database.db.borrow(), diagnosis).await;
     match res_dig {
@@ -33,7 +35,7 @@ pub async fn add_dignosis(database:Data<MongoService>, new_diag:Json<Diagnosis>)
 
 
 #[put("diagnosis/{id}")]
-pub async fn update_diagnosis(database:Data<MongoService>, path:Path<String>, new_diag:Json<Diagnosis>)->HttpResponse{
+pub async fn update_diagnosis(database:Data<MongoService>, path:Path<String>, new_diag:Json<UpdateDiagnosisReq>)->HttpResponse{
     let id =path.into_inner();
     if id.is_empty(){
         return HttpResponse::BadRequest().body("Invalid id");
@@ -59,10 +61,10 @@ pub async fn update_diagnosis(database:Data<MongoService>, path:Path<String>, ne
     if (!new_diag.note.is_empty()){
         diagnosis.note = new_diag.note.to_owned();
     }
-    if (!diagnosis.symptoms.is_empty()){
+    if (!new_diag.symptoms.is_empty()){
         diagnosis.symptoms = new_diag.symptoms.to_owned();
     }
-    if (!diagnosis.prescription.is_empty()){
+    if (!new_diag.prescription.is_empty()){
         diagnosis.prescription = new_diag.prescription.to_owned();
     }
     diagnosis.updated_at = Option::from(chrono::offset::Utc::now().to_string());
@@ -76,8 +78,25 @@ pub async fn update_diagnosis(database:Data<MongoService>, path:Path<String>, ne
 }
 
 
-#[get("/diagnosis/{id}")]
+#[get("/diagnosis/patient/{email}")]
 pub async fn get_user_diagnosis(database:Data<MongoService>,
+                                path:Path<String>)->HttpResponse{
+
+    let email =path.into_inner();
+    if email.is_empty(){
+        return HttpResponse::BadRequest().body("Invalid email");
+    };
+
+    let diag_res = DiagnosisService::get_by_patient_email(database.db.borrow(), email.to_string()).await;
+    match diag_res {
+        Ok(diagnosis)=>{return HttpResponse::Ok().json(diagnosis)},
+        Err(error)=>{return HttpResponse::InternalServerError().body(error.to_string())}
+    }
+}
+
+
+#[get("/diagnosis/{id}")]
+pub async fn get_single_diagnosis(database:Data<MongoService>,
                                 path:Path<String>)->HttpResponse{
 
     let id =path.into_inner();
@@ -85,10 +104,9 @@ pub async fn get_user_diagnosis(database:Data<MongoService>,
         return HttpResponse::BadRequest().body("Invalid id");
     };
 
-    let diag_res = DiagnosisService::get_by_user_id(database.db.borrow(), id.to_string()).await;
+    let diag_res = DiagnosisService::get_by_id(database.db.borrow(), id.to_string()).await;
     match diag_res {
         Ok(diagnosis)=>{return HttpResponse::Ok().json(diagnosis)},
         Err(error)=>{return HttpResponse::InternalServerError().body(error.to_string())}
     }
-
 }

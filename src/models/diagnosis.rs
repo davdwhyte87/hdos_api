@@ -10,6 +10,6 @@ pub struct Diagnosis {
     pub prescription: String,
     pub note: String,
     pub updated_at:Option<String>,
-    pub patient_id:String,
-    pub nurse_id:String
+    pub patient_email:String,
+    pub nurse_email:String
 }

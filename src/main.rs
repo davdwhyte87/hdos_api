@@ -4,7 +4,7 @@ use actix_web::web::Data;
 
 
 mod controllers;
-use controllers::{user_controller, diagnosis_controller};
+use controllers::{user_controller, diagnosis_controller, test_data_controller, test_record_controller};
 mod models;
 use models::{response};
 mod database;
@@ -13,6 +13,8 @@ mod services;
 use services::{user_service, pet_service, diagnosis_service};
 use crate::services::mongo_service::MongoService;
 mod utils;
+mod req_models;
+
 
 
 
@@ -40,6 +42,9 @@ async fn main() -> std::io::Result<()> {
             .service(diagnosis_controller::add_dignosis)
             .service(diagnosis_controller::update_diagnosis)
             .service(diagnosis_controller::get_user_diagnosis)
+            .service(diagnosis_controller::get_single_diagnosis)
+            .service(test_record_controller::create_test_record)
+            .service(test_data_controller::create_test_data)
     
     })
         .bind(("127.0.0.1", 80))?

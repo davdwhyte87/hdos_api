@@ -32,7 +32,13 @@ impl DiagnosisService {
     }
 
     pub async fn get_by_id(db:&Database, id:String)->Result<Option<Diagnosis>, Error>{
-        let object_id = ObjectId::parse_str(id).unwrap();
+        let object_id = ObjectId::parse_str(id);
+        let object_id = match object_id {
+            Ok(object_id)=>{object_id},
+            Err(error)=>{
+                return Err(DeserializationError {message:"Error decoding id".to_string()})
+            }
+        };
         let filter = doc! {"_id":object_id};
         let collection = db.collection::<Diagnosis>(COLLECTION_NAME);
         let user_detail = collection.find_one(filter, None).await.ok().expect("Error getting diagnosis");
@@ -58,6 +64,20 @@ impl DiagnosisService {
         Ok(diagnosis)
     }
 
+    pub async fn get_by_patient_email(db:&Database, email:String)->Result<Vec<Diagnosis>, Error>{
+        if email.is_empty(){
+            return Err(DeserializationError {message:"Error decoding id".to_string()})
+        }
+        let filter = doc! {"patient_email":email};
+        let collection = db.collection::<Diagnosis>(COLLECTION_NAME);
+        let mut cursor = collection.find(filter, None).await.ok().expect("Error getting diagnosis");
+        let mut diagnosis:Vec<Diagnosis> = Vec::new();
+
+        while let Some(diag)= cursor.try_next().await.ok().expect("Error matching "){
+            diagnosis.push(diag);
+        }
+        Ok(diagnosis)
+    }
     pub async fn update(db:&Database, id:String, mut new_diag:&Diagnosis)->Result<UpdateResult, Error>{
         let object_id = ObjectId::parse_str(id).unwrap();
         let filter = doc! {"_id":object_id};
@@ -66,7 +86,8 @@ impl DiagnosisService {
             "$set":{
                 "note":new_diag.note.to_owned(),
                 "symptoms":new_diag.symptoms.to_owned(),
-                "prescription": new_diag.prescription.to_owned()
+                "prescription": new_diag.prescription.to_owned(),
+                "updated_at": new_diag.updated_at.to_owned()
             }
         };
         let updated_doc = collection.update_one(filter,new_doc, None )

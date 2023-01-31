@@ -4,6 +4,7 @@ use actix_web::web::Data;
 use crate::database::db::db::DB;
 use crate::models::response::Response;
 use crate::models::user::User;
+use crate::req_models::create_user_req::CreateUserReq;
 use crate::services::mongo_service::MongoService;
 use crate::services::user_service::UserService;
 
@@ -21,12 +22,12 @@ pub async fn say_hello()-> HttpResponse{
 }
 
 #[post("/user")]
-pub async fn create_user(database:Data<MongoService>, new_user:Json<User>)->HttpResponse{
+pub async fn create_user(database:Data<MongoService>, new_user:Json<CreateUserReq>)->HttpResponse{
     let user = User{
         name:new_user.name.to_owned(),
-        created_at:new_user.created_at.to_owned(),
+        created_at:chrono::offset::Utc::now().to_string(),
         email:new_user.email.to_owned(),
-        password: new_user.password.to_owned(),
+        code:Option::from(93030),
         user_type: new_user.into_inner().user_type,
         id:None
     };

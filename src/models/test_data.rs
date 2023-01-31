@@ -3,13 +3,17 @@
 use mongodb::bson::oid::ObjectId;
 use serde_derive::{Deserialize, Serialize};
 
+
+// this is a model for a patients tests data which belongs to a test record 
+// test data is information on a single medical test, for example, a typhoid test
 #[derive(Debug, Serialize, Deserialize)]
-pub struct TestRecord {
+pub struct TestData {
     #[serde(rename = "_id", skip_serializing_if = "Option::is_none")]
     pub id: Option<ObjectId>,
-    pub nurse_id:String,
+    pub nurse_email:String,
     pub created_at: String,
-    pub diagnosis_id: Option<String>,
-    pub note: String,
-    pub test_datas: Vec<String>
+    pub updated_at: String,
+    pub test_record_id: String,
+    pub name: String,
+    pub result:String,
 }
