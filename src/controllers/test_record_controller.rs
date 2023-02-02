@@ -1,7 +1,11 @@
 use std::borrow::Borrow;
 use actix_web::{get, HttpResponse, post};
 use actix_web::web::{Data, Json};
+// use serde::de::Unexpected::Option;
+use serde::Serialize;
+use validator::Validate;
 use crate::models::request_models::CreateTestRecordReq;
+use crate::models::response::{Response, ResponseInsert};
 use crate::models::test_record::TestRecord;
 use crate::services::mongo_service::MongoService;
 use crate::services::test_record_service::TestRecordService;
@@ -17,10 +21,25 @@ pub async fn create_test_record(database:Data<MongoService>, data: Json<CreateTe
       patient_email:data.patient_email.to_owned(),
       test_datas: Vec::new(),
       created_at:chrono::offset::Utc::now().to_string(),
-  }  ;
+  };
+
+
+
+    // validate request
+    match data.validate() {
+        Ok(_)=>{},
+        Err(err)=>{
+            return HttpResponse::BadRequest().json(err);
+        }
+    }
   let insert_result =TestRecordService::create(database.db.borrow(), test_record).await;
     match insert_result {
-        Ok(_)=>{return HttpResponse::Ok().body("Ok")},
+        Ok(insert_data)=>{
+            return HttpResponse::Ok().json(ResponseInsert{
+                message:"ok".to_string(),
+                data:insert_data
+            })
+        },
         Err(err)=>{return HttpResponse::InternalServerError().body(err.to_string())}
     }
 }

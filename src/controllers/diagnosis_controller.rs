@@ -2,6 +2,7 @@ use std::borrow::{Borrow, BorrowMut};
 use actix_web::{get, HttpResponse, post, put};
 use actix_web::web::{Data, Json, Path};
 use mongodb::Database;
+use validator::Validate;
 use crate::models::diagnosis::Diagnosis;
 use crate::models::request_models::{CreateDiagnosisReq, UpdateDiagnosisReq};
 use crate::req_models::create_user_req::CreateUserReq;
@@ -12,6 +13,7 @@ use crate::services::mongo_service::MongoService;
 // a nurse should be abel to add a new diagnosis to a patient
 #[post("/diagnosis/create")]
 pub async fn add_dignosis(database:Data<MongoService>, new_diag:Json<CreateDiagnosisReq>) ->HttpResponse{
+
     let diagnosis = Diagnosis{
         id: None,
         note: new_diag.note.to_owned(),
@@ -22,6 +24,15 @@ pub async fn add_dignosis(database:Data<MongoService>, new_diag:Json<CreateDiagn
         patient_email:new_diag.patient_email.to_owned(),
         nurse_email: new_diag.nurse_email.to_owned()
     };
+
+
+    // validate request
+    match new_diag.validate() {
+        Ok(_)=>{},
+        Err(err)=>{
+            return HttpResponse::BadRequest().json(err);
+        }
+    }
     let res_dig = DiagnosisService::create(database.db.borrow(), diagnosis).await;
     match res_dig {
         Ok(dg)=>{
