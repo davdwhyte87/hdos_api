@@ -16,3 +16,4 @@ to their medical history.
 - nurses can add test data to test record 
 - patients can view their diagnosis 
 - patients can view their test records
+

@@ -46,6 +46,7 @@ async fn main() -> std::io::Result<()> {
             .service(test_record_controller::create_test_record)
             .service(test_data_controller::create_test_data)
             .service(test_data_controller::update_test_data)
+            .service(test_record_controller::nurse_all_records)
     })
         .bind(("127.0.0.1", 80))?
         .run()

@@ -28,11 +28,17 @@ impl TestDataService{
         let object_id = ObjectId::parse_str(id).unwrap();
         let filter = doc! {"_id":object_id};
         let collection = db.collection::<TestData>(COLLECTION_NAME);
-        let user_detail = collection.find_one(filter, None).await.ok().expect("Error getting test data");
+        let user_detail = collection.find_one(filter, None).await;
+        let user_detail = match user_detail {
+            Ok(user_detail)=>{
+                user_detail
+            },
+            Err(err)=>{return Err(err.into())}
+        };
         Ok(user_detail)
     }
 
-    pub async fn create(db: &Database, test_data: TestData) -> Result<InsertOneResult, Box<dyn Error>> {
+    pub async fn create(db: &Database, test_data: &TestData) -> Result<InsertOneResult, Box<dyn Error>> {
         // Get a handle to a collection in the database.
         let collection = db.collection::<TestData>(COLLECTION_NAME);
         let res_diag =collection.insert_one(test_data, None).await;
@@ -56,14 +62,21 @@ impl TestDataService{
         let mut cursor = collection.find(filter, None).await.ok().expect("Error getting test data");
         let mut diagnosis:Vec<TestData> = Vec::new();
 
-        while let Some(diag)= cursor.try_next().await.ok().expect("Error matching "){
+        while let Some(diag)= match cursor.try_next().await {
+            Ok(cursor) => {cursor}
+            Err(err) => {return Err(err.into())}
+        } {
             diagnosis.push(diag);
         }
         Ok(diagnosis)
     }
 
     pub async fn update(db:&Database, id:String, mut new_data:&TestData)->Result<UpdateResult, Box<dyn Error>>{
-        let object_id = ObjectId::parse_str(id).unwrap();
+        let object_id = ObjectId::parse_str(id);
+        let object_id = match object_id {
+            Ok(object_id)=>{object_id},
+            Err(err)=>{return Err(err.into())}
+        };
         let filter = doc! {"_id":object_id};
         let collection = db.collection::<TestData>(COLLECTION_NAME);
         let new_doc = doc! {
@@ -73,10 +86,14 @@ impl TestDataService{
             }
         };
         let updated_doc = collection.update_one(filter,new_doc, None )
-            .await
-            .ok().expect("Error updating test data");
+            .await;
 
-        Ok(updated_doc)
+        match updated_doc {
+            Ok(updated_doc)=>{return Ok(updated_doc)},
+            Err(err)=>{
+                return Err(err.into())
+            }
+        }
     }
 
     // each test record has many related testdata, this function gets all test data for a given 

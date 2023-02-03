@@ -2,6 +2,7 @@
 
 use mongodb::bson::oid::ObjectId;
 use serde_derive::{Deserialize, Serialize};
+use crate::models::test_data::TestData;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct TestRecord {
@@ -12,5 +13,6 @@ pub struct TestRecord {
     pub diagnosis_id: Option<String>,
     pub note: String,
     pub patient_email:String,
-    pub test_datas: Vec<String>
+    pub test_datas: Vec<ObjectId>,
+    pub test_data:Option<Vec<TestData>>
 }

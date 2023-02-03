@@ -13,7 +13,7 @@ pub struct TestData {
     pub nurse_email:String,
     pub created_at: String,
     pub updated_at: String,
-    pub test_record_id: String,
+    pub test_record_id: ObjectId,
     pub name: String,
     pub result:String,
 }
