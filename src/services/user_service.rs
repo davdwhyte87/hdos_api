@@ -5,14 +5,17 @@ use std::string::ToString;
 use handlebars::Handlebars;
 use mongodb::{Client, Database, options::ClientOptions};
 use mongodb::bson::doc;
-use mongodb::bson::extjson::de::Error;
+// use mongodb::bson::extjson::de::Error;
+use std::error::Error;
 use mongodb::bson::oid::ObjectId;
 use mongodb::results::InsertOneResult;
+use r2d2_mongodb::mongodb::ErrorCode::OK;
 use serde_json::{json, Value};
 
 
 use crate::database::db::db::DB;
 use crate::models::helper::EmailData;
+use crate::models::request_models::LoginReq;
 use crate::models::user::User;
 use crate::utils::send_email::{ACTIVATE_EMAIL, get_body, send_email};
 
@@ -24,7 +27,7 @@ pub struct UserService{
 }
 
 impl UserService{
-    pub async fn create_user(db:&Database, user:&User)->Result<InsertOneResult, Error>{
+    pub async fn create_user(db:&Database, user:&User)->Result<InsertOneResult, Box<dyn Error>>{
         // Get a handle to a collection in the database.
         let collection = db.collection::<User>(COLLECTION_NAME);
 
@@ -40,29 +43,50 @@ impl UserService{
         let code:u32= 9384;
 
 
-        let name = user.name.as_str().to_string();
-
-        let mut reg = Handlebars::new();
-        let order_email_content = reg.render_template (
-            include_str!("../utils/html/activate_new_account.hbs"),
-            &serde_json::json!({"name" :name, "code":code})).unwrap();
-
-        let email_data = EmailData{
-            subject:"Confirmation code".to_string(),
-            to: (*user.email).parse().unwrap(),
-            body: order_email_content
-        };
-        send_email(email_data);
+        // let name = user.name.as_str().to_string();
+        // 
+        // let mut reg = Handlebars::new();
+        // let order_email_content = reg.render_template (
+        //     include_str!("../utils/html/activate_new_account.hbs"),
+        //     &serde_json::json!({"name" :name, "code":code})).unwrap();
+        // 
+        // let email_data = EmailData{
+        //     subject:"Confirmation code".to_string(),
+        //     to: (*user.email).parse().unwrap(),
+        //     body: order_email_content
+        // };
+        // send_email(email_data);
         // Insert data into db.
-        let res_user =collection.insert_one(user, None).await.ok().expect("Error creating user");
+        let res_user =collection.insert_one(user, None).await;
+        let res_user = match res_user {
+            Ok(res_user)=>{res_user},
+            Err(err)=>{return Err(err.into())}
+        };
         Ok(res_user)
     }
-    pub async fn get_by_id(db:&Database, id:String)->Result<User, Error>{
+
+
+
+    pub async fn get_by_id(db:&Database, id:String)->Result<Option<User>, Box<dyn Error>>{
         let object_id = ObjectId::parse_str(id).unwrap();
         let filter = doc! {"_id":object_id};
         let collection = db.collection::<User>(COLLECTION_NAME);
-        let user_detail = collection.find_one(filter, None).await.ok().expect("Error getting diagnosis");
-        Ok(user_detail.unwrap())
+        let user_detail = collection.find_one(filter, None).await;
+        match user_detail {
+            Ok(user_detail)=>{return Ok(user_detail)},
+            Err(err)=>{return Err(err.into())}
+        };
+    }
+
+    pub async fn get_by_email(db:&Database, email:String)->Result<Option<User>, Box<dyn Error>>{
+
+        let filter = doc! {"email":email};
+        let collection = db.collection::<User>(COLLECTION_NAME);
+        let user_detail = collection.find_one(filter, None).await;
+        match user_detail {
+            Ok(user_detail)=>{return Ok(user_detail)},
+            Err(err)=>{return Err(err.into())}
+        };
     }
 }
 

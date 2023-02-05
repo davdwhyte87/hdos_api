@@ -37,8 +37,13 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move|| {
         App::new()
             .app_data(db_data.clone())
+
+            // USER CONTROLLERS
             .service(user_controller::say_hello)
             .service(user_controller::create_user)
+            .service(user_controller::login_user)
+
+            //
             .service(diagnosis_controller::add_dignosis)
             .service(diagnosis_controller::update_diagnosis)
             .service(diagnosis_controller::get_user_diagnosis)

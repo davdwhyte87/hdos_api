@@ -1,3 +1,4 @@
+use std::env::current_exe;
 use mongodb::bson::{bson, doc, from_bson, from_document};
 // use mongodb::bson::extjson::de::Error;
 use std::error::Error;
@@ -37,17 +38,28 @@ impl TestRecordService {
         };
         let filter = doc! {"patient_id":object_id};
         let collection = db.collection::<TestRecord>(COLLECTION_NAME);
-        let mut cursor = collection.find(filter, None).await.ok().expect("Error getting test record");
+        let mut cursor = collection.find(filter, None).await;
+        let mut cursor = match cursor {
+            Ok(cursor)=>{cursor},
+            Err(err)=>{return Err(err.into())}
+        };
         let mut test_record:Vec<TestRecord> = Vec::new();
 
-        while let Some(diag)= cursor.try_next().await.ok().expect("Error matching "){
+        while let Some(diag)=  match cursor.try_next().await {
+            Ok(cursor) => {cursor}
+            Err(err) => {return Err(err.into())}
+        } {
             test_record.push(diag);
         }
         Ok(test_record)
     }
 
     pub async fn get_by_id(db:&Database, id:String)->Result<Option<TestRecord>,  Box<dyn Error>>{
-        let object_id = ObjectId::parse_str(id).unwrap();
+        let object_id = ObjectId::parse_str(id);
+        let object_id = match object_id {
+            Ok(object_id)=>{object_id},
+            Err(error)=>{ return Err(error.into())}
+        };
         let filter = doc! {"_id":object_id};
         let collection = db.collection::<TestRecord>(COLLECTION_NAME);
         let user_detail = collection.find_one(filter, None).await;
@@ -124,9 +136,13 @@ impl TestRecordService {
             }
         };
         let updated_doc = collection.update_one(filter,new_doc, None )
-            .await
-            .ok().expect("Error updating test data");
+            .await;
 
-        Ok(updated_doc)
+        match updated_doc {
+            Ok(updated_doc)=>{return Ok(updated_doc)},
+            Err(err)=>{
+                return Err(err.into())
+            }
+        }
     }
 }

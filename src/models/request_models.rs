@@ -23,6 +23,14 @@ pub struct  UpdateDiagnosisReq{
 }
 
 #[derive(Debug, Serialize, Deserialize, Validate)]
+pub struct  LoginReq{
+    #[validate(email)]
+    pub email:String,
+    #[validate(length(max=6))]
+    pub code:String
+}
+
+#[derive(Debug, Serialize, Deserialize, Validate)]
 pub struct  CreateTestRecordReq{
     #[validate(email)]
     pub nurse_email:String,

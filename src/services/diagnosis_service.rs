@@ -5,7 +5,9 @@ use std::string::ToString;
 use mongodb::{Client, Database, options::ClientOptions};
 use mongodb::bson::{bson, doc};
 use mongodb::bson::oid::ObjectId;
-use mongodb::bson::extjson::de::Error;
+// use mongodb::bson::extjson::de::Error;
+use std::error::Error;
+use futures::future::err;
 use mongodb::results::{InsertOneResult, UpdateResult};
 use futures::stream::TryStreamExt;
 use mongodb::bson::extjson::de::Error::DeserializationError;
@@ -24,62 +26,86 @@ pub struct DiagnosisService{
 }
 
 impl DiagnosisService {
-    pub async fn create(db: &Database, diagnosis: Diagnosis) -> Result<InsertOneResult, Error> {
+    pub async fn create(db: &Database, diagnosis: Diagnosis) -> Result<InsertOneResult, Box<dyn Error>> {
         // Get a handle to a collection in the database.
         let collection = db.collection::<Diagnosis>(COLLECTION_NAME);
-        let res_diag =collection.insert_one(diagnosis, None).await.ok().expect("Error creating diagnosis");
-        Ok(res_diag)
+        let res_diag =collection.insert_one(diagnosis, None).await;
+        match res_diag {
+            Ok(res_diag)=>{return Ok(res_diag)},
+            Err(err)=>{return Err(err.into())}
+        }
     }
 
-    pub async fn get_by_id(db:&Database, id:String)->Result<Option<Diagnosis>, Error>{
+    pub async fn get_by_id(db:&Database, id:String)->Result<Option<Diagnosis>, Box<dyn Error>>{
         let object_id = ObjectId::parse_str(id);
         let object_id = match object_id {
             Ok(object_id)=>{object_id},
             Err(error)=>{
-                return Err(DeserializationError {message:"Error decoding id".to_string()})
+                return Err(error.into())
             }
         };
         let filter = doc! {"_id":object_id};
         let collection = db.collection::<Diagnosis>(COLLECTION_NAME);
-        let user_detail = collection.find_one(filter, None).await.ok().expect("Error getting diagnosis");
-        Ok(user_detail)
+        let user_detail = collection.find_one(filter, None).await;
+        match user_detail {
+            Ok(user_detail)=>{return Ok(user_detail)},
+            Err(err)=>{return Err(err.into())}
+        }
     }
 
-    pub async fn get_by_user_id(db:&Database, id:String)->Result<Vec<Diagnosis>, Error>{
+    pub async fn get_by_user_id(db:&Database, id:String)->Result<Vec<Diagnosis>, Box<dyn Error>>{
         let object_id = ObjectId::parse_str(id);
         let object_id = match object_id {
             Ok(object_id)=>{object_id},
             Err(error)=>{
-               return Err(DeserializationError {message:"Error decoding id".to_string()})
+               return Err(error.into())
             }
         };
         let filter = doc! {"patient_id":object_id};
         let collection = db.collection::<Diagnosis>(COLLECTION_NAME);
-        let mut cursor = collection.find(filter, None).await.ok().expect("Error getting diagnosis");
+        let mut cursor = collection.find(filter, None).await;
+        let mut cursor = match cursor {
+            Ok(cursor)=>{cursor},
+            Err(err)=>{return Err(err.into())}
+        };
         let mut diagnosis:Vec<Diagnosis> = Vec::new();
 
-        while let Some(diag)= cursor.try_next().await.ok().expect("Error matching "){
+        while let Some(diag)= match cursor.try_next().await{
+            Ok(cursor)=>{cursor},
+            Err(err)=>{return Err(err.into())}
+        }{
             diagnosis.push(diag);
         }
         Ok(diagnosis)
     }
 
-    pub async fn get_by_patient_email(db:&Database, email:String)->Result<Vec<Diagnosis>, Error>{
+    pub async fn get_by_patient_email(db:&Database, email:String)->Result<Vec<Diagnosis>, Box<dyn Error>>{
         if email.is_empty(){
-            return Err(DeserializationError {message:"Error decoding id".to_string()})
+            return Err(Box::try_from("Email is empty").unwrap())
         }
         let filter = doc! {"patient_email":email};
         let collection = db.collection::<Diagnosis>(COLLECTION_NAME);
-        let mut cursor = collection.find(filter, None).await.ok().expect("Error getting diagnosis");
+        let mut cursor = collection.find(filter, None).await;
+        let mut cursor = match cursor {
+            Ok(cursor)=>{cursor},
+            Err(err)=>{return Err(err.into())}
+        };
         let mut diagnosis:Vec<Diagnosis> = Vec::new();
 
-        while let Some(diag)= cursor.try_next().await.ok().expect("Error matching "){
+        while let Some(diag)= match cursor.try_next().await {
+            Ok(cursor)=>{cursor},
+            Err(err)=>{return Err(err.into())}
+        }{
             diagnosis.push(diag);
         }
         Ok(diagnosis)
     }
-    pub async fn update(db:&Database, id:String, mut new_diag:&Diagnosis)->Result<UpdateResult, Error>{
-        let object_id = ObjectId::parse_str(id).unwrap();
+    pub async fn update(db:&Database, id:String, mut new_diag:&Diagnosis)->Result<UpdateResult, Box<dyn Error>>{
+        let object_id = ObjectId::parse_str(id);
+        let object_id = match object_id {
+            Ok(object_id)=>{object_id},
+            Err(err)=>{return Err(err.into())}
+        };
         let filter = doc! {"_id":object_id};
         let collection = db.collection::<Diagnosis>(COLLECTION_NAME);
         let new_doc = doc! {
@@ -91,9 +117,13 @@ impl DiagnosisService {
             }
         };
         let updated_doc = collection.update_one(filter,new_doc, None )
-            .await
-            .ok().expect("Error updating diagnosis");
+            .await;
 
-        Ok(updated_doc)
+        match updated_doc {
+            Ok(updated_doc)=>{return Ok(updated_doc)},
+            Err(err)=>{
+                return Err(err.into())
+            }
+        }
     }
 }
