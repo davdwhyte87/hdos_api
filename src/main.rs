@@ -1,6 +1,6 @@
 use std::env;
 use actix_web::{get, web, App, HttpServer, Responder};
-use actix_web::web::Data;
+use actix_web::web::{Data, resource, route, service};
 
 
 mod controllers;
@@ -14,6 +14,7 @@ use services::{user_service, pet_service, diagnosis_service};
 use crate::services::mongo_service::MongoService;
 mod utils;
 mod req_models;
+mod middlewares;
 
 
 
@@ -31,6 +32,7 @@ async fn hello(name: web::Path<String>) -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+
     env::set_var("RUST_BACKTRACE", "full");
     let db = MongoService::init().await;
     let db_data = Data::new(db);
@@ -39,19 +41,39 @@ async fn main() -> std::io::Result<()> {
             .app_data(db_data.clone())
 
             // USER CONTROLLERS
-            .service(user_controller::say_hello)
+
+            .service(
+                // all authenticated endpoints
+                web::scope("api/v1/auth")
+                    .service(user_controller::say_hello)
+                    .wrap(middlewares::auth_middleware::AuthM)
+
+                    // Test records routes
+                    .service(test_record_controller::nurse_get_all_records)
+                    .service(test_record_controller::nurse_create_test_record)
+                    .service(test_record_controller::patient_get_all_records)
+                    .service(test_record_controller::nurse_get_single_test_record)
+                    .service(test_record_controller::patient_get_single_test_record)
+
+                    // Test data routes
+                    .service(test_data_controller::create_test_data)
+                    .service(test_data_controller::update_test_data)
+
+                    // Diagnosis routes
+                    .service(diagnosis_controller::add_dignosis)
+                    .service(diagnosis_controller::update_diagnosis)
+                    .service(diagnosis_controller::nurse_get_diagnosis)
+                    .service(diagnosis_controller::patient_get_diagnosis)
+                    .service(diagnosis_controller::get_single_diagnosis)
+
+
+            )
             .service(user_controller::create_user)
             .service(user_controller::login_user)
 
             //
-            .service(diagnosis_controller::add_dignosis)
-            .service(diagnosis_controller::update_diagnosis)
-            .service(diagnosis_controller::get_user_diagnosis)
-            .service(diagnosis_controller::get_single_diagnosis)
-            .service(test_record_controller::create_test_record)
-            .service(test_data_controller::create_test_data)
-            .service(test_data_controller::update_test_data)
-            .service(test_record_controller::nurse_all_records)
+
+
     })
         .bind(("127.0.0.1", 80))?
         .run()

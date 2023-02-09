@@ -5,12 +5,12 @@ use serde_derive::{Deserialize, Serialize};
 use crate::models::user::UserType;
 
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Claims{
-    role:UserType,
-    email: String,
-    name:String,
-    exp:usize
+    pub role:UserType,
+    pub email: String,
+    pub name:String,
+    pub exp:usize
 }
 
 

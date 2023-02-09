@@ -145,4 +145,40 @@ impl TestRecordService {
             }
         }
     }
+
+
+    pub async fn get_by_patient_email(db:&Database, email:String)->Result<Vec<TestRecord>,  Box<dyn Error>>{
+        // if email.is_empty(){
+        //     return Err((_))
+        // }
+        let lookup_2 = doc! {
+             "$lookup":
+                {
+                   "from": "Test Data",
+                   "localField": "test_datas",
+                   "foreignField": "_id",
+                   "as": "test_data"
+                }
+        };
+
+        let filter = doc! {"$match":{"patient_email":email}};
+        let collection = db.collection::<TestRecord>(COLLECTION_NAME);
+        // let mut cursor = collection.find(filter, None).await;
+        let mut cursor = collection.aggregate(vec![filter,lookup_2 ], None).await;
+        let mut cursor = match cursor {
+            Ok(cursor)=>{cursor},
+            Err(err)=>{return Err(err.into())}
+        };
+        let mut test_record:Vec<TestRecord> = Vec::new();
+
+        while let Some(diag)=  match cursor.try_next().await {
+            Ok(cursor) => {cursor}
+            Err(err) => {return Err(err.into())}
+        } {
+            let data: TestRecord= from_document(diag)?;
+            test_record.push(data);
+        }
+        Ok(test_record)
+    }
 }
+

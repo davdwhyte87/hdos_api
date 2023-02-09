@@ -1,6 +1,6 @@
 use std::borrow::{Borrow, BorrowMut};
 use actix_web::{Responder, get, HttpResponse, web::Json, post};
-use actix_web::web::Data;
+use actix_web::web::{Data, ReqData};
 use handlebars::Handlebars;
 use validator::Validate;
 use crate::database::db::db::DB;
@@ -11,12 +11,18 @@ use crate::models::user::User;
 use crate::req_models::create_user_req::CreateUserReq;
 use crate::services::mongo_service::MongoService;
 use crate::services::user_service::UserService;
-use crate::utils::auth::{decode_token, encode_token};
+use crate::utils::auth::{Claims, decode_token, encode_token};
 use crate::utils::send_email::send_email;
 
+
 #[get("/say_hello")]
-pub async fn say_hello()-> HttpResponse{
-    format!("Hello maaa gee");
+pub async fn say_hello(claim:Option<ReqData<Claims>>)-> HttpResponse{
+    print!("Hello maaa gee");
+    if let Some(claim) = claim{
+        print!("{:?}", claim)
+    }
+
+    print!("Hello maaa gee");
     let response = Response{
         message:"good".to_string(),
     };
@@ -24,14 +30,14 @@ pub async fn say_hello()-> HttpResponse{
     //     Ok((_))=>{},
     //     Err(err)=>{println!("{:?}", err)}
     // }
-    let tdata = decode_token("\
-    eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiUGF0aWVudCIsImVtYWlsIjoicGF0aWVudDFAeC5jb20iLCJuYW1lIjoicGF0aWVudDEiLCJleHAiOjE2NzU1NjI1ODB9.lSUV9_cvLqYXgsvfvbbr5s_QqDtFzbIux6ePVSKu9xo\
-    ".to_string());
-    let tdata = match tdata {
-        Ok(tdata)=>{tdata},
-        Err(err)=>{return HttpResponse::InternalServerError().body("Error decoding")}
-    };
-    println!("{:?}",  tdata);
+    // let tdata = decode_token("\
+    // eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoiUGF0aWVudCIsImVtYWlsIjoicGF0aWVudDFAeC5jb20iLCJuYW1lIjoicGF0aWVudDEiLCJleHAiOjE2NzU1NjI1ODB9.lSUV9_cvLqYXgsvfvbbr5s_QqDtFzbIux6ePVSKu9xo\
+    // ".to_string());
+    // let tdata = match tdata {
+    //     Ok(tdata)=>{tdata},
+    //     Err(err)=>{return HttpResponse::InternalServerError().json(err.to_string())}
+    // };
+    // println!("{:?}",  tdata);
     return HttpResponse::Created().json(response)
 }
 

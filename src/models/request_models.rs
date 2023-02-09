@@ -15,9 +15,11 @@ pub struct  CreateDiagnosisReq{
     pub nurse_email:String
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Validate)]
 pub struct  UpdateDiagnosisReq{
+    #[validate(length(min=1))]
     pub symptoms:String,
+    #[validate(length(min=1))]
     pub prescription: String,
     pub note: String,
 }
@@ -39,8 +41,10 @@ pub struct  CreateTestRecordReq{
     pub note:String
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Validate)]
 pub struct  UpdateTestDataReq{
+    #[validate(length(min=1))]
     pub name:String,
+    #[validate(length(min=1))]
     pub result: String,
 }

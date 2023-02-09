@@ -12,7 +12,7 @@ pub struct User {
     pub user_type:UserType
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub enum UserType{
     Patient,
     Nurse,
